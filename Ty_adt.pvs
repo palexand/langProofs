@@ -1,0 +1,208 @@
+%%% ADT file generated from langProofs
+
+Ty_adt: THEORY
+ BEGIN
+
+  Ty: TYPE
+
+  tyNum?, tyBool?, tyAbs?, tyBottom?: [Ty -> boolean]
+
+  tyNum: (tyNum?)
+
+  tyBool: (tyBool?)
+
+  tyAbs: [[Ty, Ty] -> (tyAbs?)]
+
+  tyBottom: (tyBottom?)
+
+  t1: [(tyAbs?) -> Ty]
+
+  t2: [(tyAbs?) -> Ty]
+
+  Ty_ord: [Ty -> upto(3)]
+
+  Ty_ord_defaxiom: AXIOM
+    Ty_ord(tyNum) = 0 AND
+     Ty_ord(tyBool) = 1 AND
+      (FORALL (t1: Ty, t2: Ty): Ty_ord(tyAbs(t1, t2)) = 2) AND
+       Ty_ord(tyBottom) = 3;
+
+  ord(x: Ty): upto(3) =
+      CASES x
+        OF tyNum: 0,
+           tyBool: 1,
+           tyAbs(tyAbs1_var, tyAbs2_var): 2,
+           tyBottom: 3
+        ENDCASES
+
+  Ty_tyNum_extensionality: AXIOM
+    FORALL (tyNum?_var: (tyNum?), tyNum?_var2: (tyNum?)):
+      tyNum?_var = tyNum?_var2;
+
+  Ty_tyBool_extensionality: AXIOM
+    FORALL (tyBool?_var: (tyBool?), tyBool?_var2: (tyBool?)):
+      tyBool?_var = tyBool?_var2;
+
+  Ty_tyAbs_extensionality: AXIOM
+    FORALL (tyAbs?_var: (tyAbs?), tyAbs?_var2: (tyAbs?)):
+      t1(tyAbs?_var) = t1(tyAbs?_var2) AND t2(tyAbs?_var) = t2(tyAbs?_var2)
+       IMPLIES tyAbs?_var = tyAbs?_var2;
+
+  Ty_tyAbs_eta: AXIOM
+    FORALL (tyAbs?_var: (tyAbs?)):
+      tyAbs(t1(tyAbs?_var), t2(tyAbs?_var)) = tyAbs?_var;
+
+  Ty_tyBottom_extensionality: AXIOM
+    FORALL (tyBottom?_var: (tyBottom?), tyBottom?_var2: (tyBottom?)):
+      tyBottom?_var = tyBottom?_var2;
+
+  Ty_t1_tyAbs: AXIOM
+    FORALL (tyAbs1_var: Ty, tyAbs2_var: Ty):
+      t1(tyAbs(tyAbs1_var, tyAbs2_var)) = tyAbs1_var;
+
+  Ty_t2_tyAbs: AXIOM
+    FORALL (tyAbs1_var: Ty, tyAbs2_var: Ty):
+      t2(tyAbs(tyAbs1_var, tyAbs2_var)) = tyAbs2_var;
+
+  Ty_inclusive: AXIOM
+    FORALL (Ty_var: Ty):
+      tyNum?(Ty_var) OR
+       tyBool?(Ty_var) OR tyAbs?(Ty_var) OR tyBottom?(Ty_var);
+
+  Ty_induction: AXIOM
+    FORALL (p: [Ty -> boolean]):
+      p(tyNum) AND
+       p(tyBool) AND
+        (FORALL (tyAbs1_var: Ty, tyAbs2_var: Ty):
+           p(tyAbs1_var) AND p(tyAbs2_var) IMPLIES
+            p(tyAbs(tyAbs1_var, tyAbs2_var)))
+         AND p(tyBottom)
+       IMPLIES (FORALL (Ty_var: Ty): p(Ty_var));
+
+  subterm(x: Ty, y: Ty):  boolean =
+      x = y OR
+       CASES y
+         OF tyNum: FALSE,
+            tyBool: FALSE,
+            tyAbs(tyAbs1_var, tyAbs2_var):
+              subterm(x, tyAbs1_var) OR subterm(x, tyAbs2_var),
+            tyBottom: FALSE
+         ENDCASES;
+
+  <<:  (well_founded?[Ty]) =
+      LAMBDA (x, y: Ty):
+        CASES y
+          OF tyNum: FALSE,
+             tyBool: FALSE,
+             tyAbs(tyAbs1_var, tyAbs2_var):
+               (x = tyAbs1_var OR x << tyAbs1_var) OR
+                x = tyAbs2_var OR x << tyAbs2_var,
+             tyBottom: FALSE
+          ENDCASES;
+
+  Ty_well_founded: AXIOM well_founded?[Ty](<<);
+
+  reduce_nat(tyNum?_fun: nat, tyBool?_fun: nat,
+             tyAbs?_fun: [[nat, nat] -> nat], tyBottom?_fun: nat):
+        [Ty -> nat] =
+      LAMBDA (Ty_adtvar: Ty):
+        LET red: [Ty -> nat] =
+              reduce_nat(tyNum?_fun, tyBool?_fun, tyAbs?_fun,
+                         tyBottom?_fun)
+          IN
+          CASES Ty_adtvar
+            OF tyNum: tyNum?_fun,
+               tyBool: tyBool?_fun,
+               tyAbs(tyAbs1_var, tyAbs2_var):
+                 tyAbs?_fun(red(tyAbs1_var), red(tyAbs2_var)),
+               tyBottom: tyBottom?_fun
+            ENDCASES;
+
+  REDUCE_nat(tyNum?_fun: [Ty -> nat], tyBool?_fun: [Ty -> nat],
+             tyAbs?_fun: [[nat, nat, Ty] -> nat],
+             tyBottom?_fun: [Ty -> nat]):
+        [Ty -> nat] =
+      LAMBDA (Ty_adtvar: Ty):
+        LET red: [Ty -> nat] =
+              REDUCE_nat(tyNum?_fun, tyBool?_fun, tyAbs?_fun,
+                         tyBottom?_fun)
+          IN
+          CASES Ty_adtvar
+            OF tyNum: tyNum?_fun(Ty_adtvar),
+               tyBool: tyBool?_fun(Ty_adtvar),
+               tyAbs(tyAbs1_var, tyAbs2_var):
+                 tyAbs?_fun(red(tyAbs1_var), red(tyAbs2_var), Ty_adtvar),
+               tyBottom: tyBottom?_fun(Ty_adtvar)
+            ENDCASES;
+
+  reduce_ordinal(tyNum?_fun: ordinal, tyBool?_fun: ordinal,
+                 tyAbs?_fun: [[ordinal, ordinal] -> ordinal],
+                 tyBottom?_fun: ordinal):
+        [Ty -> ordinal] =
+      LAMBDA (Ty_adtvar: Ty):
+        LET red: [Ty -> ordinal] =
+              reduce_ordinal(tyNum?_fun, tyBool?_fun, tyAbs?_fun,
+                             tyBottom?_fun)
+          IN
+          CASES Ty_adtvar
+            OF tyNum: tyNum?_fun,
+               tyBool: tyBool?_fun,
+               tyAbs(tyAbs1_var, tyAbs2_var):
+                 tyAbs?_fun(red(tyAbs1_var), red(tyAbs2_var)),
+               tyBottom: tyBottom?_fun
+            ENDCASES;
+
+  REDUCE_ordinal(tyNum?_fun: [Ty -> ordinal], tyBool?_fun: [Ty -> ordinal],
+                 tyAbs?_fun: [[ordinal, ordinal, Ty] -> ordinal],
+                 tyBottom?_fun: [Ty -> ordinal]):
+        [Ty -> ordinal] =
+      LAMBDA (Ty_adtvar: Ty):
+        LET red: [Ty -> ordinal] =
+              REDUCE_ordinal(tyNum?_fun, tyBool?_fun, tyAbs?_fun,
+                             tyBottom?_fun)
+          IN
+          CASES Ty_adtvar
+            OF tyNum: tyNum?_fun(Ty_adtvar),
+               tyBool: tyBool?_fun(Ty_adtvar),
+               tyAbs(tyAbs1_var, tyAbs2_var):
+                 tyAbs?_fun(red(tyAbs1_var), red(tyAbs2_var), Ty_adtvar),
+               tyBottom: tyBottom?_fun(Ty_adtvar)
+            ENDCASES;
+ END Ty_adt
+
+Ty_adt_reduce[range: TYPE]: THEORY
+ BEGIN
+
+  IMPORTING Ty_adt
+
+  reduce(tyNum?_fun: range, tyBool?_fun: range,
+         tyAbs?_fun: [[range, range] -> range], tyBottom?_fun: range):
+        [Ty -> range] =
+      LAMBDA (Ty_adtvar: Ty):
+        LET red: [Ty -> range] =
+              reduce(tyNum?_fun, tyBool?_fun, tyAbs?_fun, tyBottom?_fun)
+          IN
+          CASES Ty_adtvar
+            OF tyNum: tyNum?_fun,
+               tyBool: tyBool?_fun,
+               tyAbs(tyAbs1_var, tyAbs2_var):
+                 tyAbs?_fun(red(tyAbs1_var), red(tyAbs2_var)),
+               tyBottom: tyBottom?_fun
+            ENDCASES;
+
+  REDUCE(tyNum?_fun: [Ty -> range], tyBool?_fun: [Ty -> range],
+         tyAbs?_fun: [[range, range, Ty] -> range],
+         tyBottom?_fun: [Ty -> range]):
+        [Ty -> range] =
+      LAMBDA (Ty_adtvar: Ty):
+        LET red: [Ty -> range] =
+              REDUCE(tyNum?_fun, tyBool?_fun, tyAbs?_fun, tyBottom?_fun)
+          IN
+          CASES Ty_adtvar
+            OF tyNum: tyNum?_fun(Ty_adtvar),
+               tyBool: tyBool?_fun(Ty_adtvar),
+               tyAbs(tyAbs1_var, tyAbs2_var):
+                 tyAbs?_fun(red(tyAbs1_var), red(tyAbs2_var), Ty_adtvar),
+               tyBottom: tyBottom?_fun(Ty_adtvar)
+            ENDCASES;
+ END Ty_adt_reduce

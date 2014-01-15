@@ -1,0 +1,362 @@
+%%% ADT file generated from langProofs
+
+AST_adt: THEORY
+ BEGIN
+
+  AST: TYPE
+
+  astNum?, astBool?, astPlus?, astVar?, astLambda?, astApp?:
+        [AST -> boolean]
+
+  astNum: [nat -> (astNum?)]
+
+  astBool: [boolean -> (astBool?)]
+
+  astPlus: [[AST, AST] -> (astPlus?)]
+
+  astVar: [nat -> (astVar?)]
+
+  astLambda: [[AST, AST] -> (astLambda?)]
+
+  astApp: [[AST, AST] -> (astApp?)]
+
+  num: [(astNum?) -> nat]
+
+  val: [(astBool?) -> boolean]
+
+  t1: [{x: AST | astPlus?(x) OR astApp?(x)} -> AST]
+
+  JUDGEMENT (astPlus?) SUBTYPE_OF {x: AST | astPlus?(x) OR astApp?(x)}
+
+  JUDGEMENT (astApp?) SUBTYPE_OF {x: AST | astPlus?(x) OR astApp?(x)}
+
+  t2: [{x: AST | astPlus?(x) OR astApp?(x)} -> AST]
+
+  sym: [(astVar?) -> nat]
+
+  v: [(astLambda?) -> AST]
+
+  t0: [(astLambda?) -> AST]
+
+  AST_ord: [AST -> upto(5)]
+
+  AST_ord_defaxiom: AXIOM
+         FORALL (num: nat): AST_ord(astNum(num)) = 0
+     AND FORALL (val: boolean): AST_ord(astBool(val)) = 1
+     AND FORALL (t1: AST, t2: AST): AST_ord(astPlus(t1, t2)) = 2
+     AND FORALL (sym: nat): AST_ord(astVar(sym)) = 3
+     AND FORALL (v: AST, t0: AST): AST_ord(astLambda(v, t0)) = 4
+     AND FORALL (t1: AST, t2: AST): AST_ord(astApp(t1, t2)) = 5;
+
+  ord(x: AST): upto(5) =
+      CASES x
+        OF astNum(astNum1_var): 0,
+           astBool(astBool1_var): 1,
+           astPlus(astPlus1_var, astPlus2_var): 2,
+           astVar(astVar1_var): 3,
+           astLambda(astLambda1_var, astLambda2_var): 4,
+           astApp(astApp1_var, astApp2_var): 5
+        ENDCASES
+
+  AST_astNum_extensionality: AXIOM
+    FORALL (astNum?_var: (astNum?), astNum?_var2: (astNum?)):
+      num(astNum?_var) = num(astNum?_var2) IMPLIES
+       astNum?_var = astNum?_var2;
+
+  AST_astNum_eta: AXIOM
+    FORALL (astNum?_var: (astNum?)): astNum(num(astNum?_var)) = astNum?_var;
+
+  AST_astBool_extensionality: AXIOM
+    FORALL (astBool?_var: (astBool?), astBool?_var2: (astBool?)):
+      val(astBool?_var) = val(astBool?_var2) IMPLIES
+       astBool?_var = astBool?_var2;
+
+  AST_astBool_eta: AXIOM
+    FORALL (astBool?_var: (astBool?)):
+      astBool(val(astBool?_var)) = astBool?_var;
+
+  AST_astPlus_extensionality: AXIOM
+    FORALL (astPlus?_var: (astPlus?), astPlus?_var2: (astPlus?)):
+      t1(astPlus?_var) = t1(astPlus?_var2) AND
+       t2(astPlus?_var) = t2(astPlus?_var2)
+       IMPLIES astPlus?_var = astPlus?_var2;
+
+  AST_astPlus_eta: AXIOM
+    FORALL (astPlus?_var: (astPlus?)):
+      astPlus(t1(astPlus?_var), t2(astPlus?_var)) = astPlus?_var;
+
+  AST_astVar_extensionality: AXIOM
+    FORALL (astVar?_var: (astVar?), astVar?_var2: (astVar?)):
+      sym(astVar?_var) = sym(astVar?_var2) IMPLIES
+       astVar?_var = astVar?_var2;
+
+  AST_astVar_eta: AXIOM
+    FORALL (astVar?_var: (astVar?)): astVar(sym(astVar?_var)) = astVar?_var;
+
+  AST_astLambda_extensionality: AXIOM
+    FORALL (astLambda?_var: (astLambda?), astLambda?_var2: (astLambda?)):
+      v(astLambda?_var) = v(astLambda?_var2) AND
+       t0(astLambda?_var) = t0(astLambda?_var2)
+       IMPLIES astLambda?_var = astLambda?_var2;
+
+  AST_astLambda_eta: AXIOM
+    FORALL (astLambda?_var: (astLambda?)):
+      astLambda(v(astLambda?_var), t0(astLambda?_var)) = astLambda?_var;
+
+  AST_astApp_extensionality: AXIOM
+    FORALL (astApp?_var: (astApp?), astApp?_var2: (astApp?)):
+      t1(astApp?_var) = t1(astApp?_var2) AND
+       t2(astApp?_var) = t2(astApp?_var2)
+       IMPLIES astApp?_var = astApp?_var2;
+
+  AST_astApp_eta: AXIOM
+    FORALL (astApp?_var: (astApp?)):
+      astApp(t1(astApp?_var), t2(astApp?_var)) = astApp?_var;
+
+  AST_num_astNum: AXIOM
+    FORALL (astNum1_var: nat): num(astNum(astNum1_var)) = astNum1_var;
+
+  AST_val_astBool: AXIOM
+    FORALL (astBool1_var: boolean):
+      val(astBool(astBool1_var)) = astBool1_var;
+
+  AST_t1_astPlus: AXIOM
+    FORALL (astPlus1_var: AST, astPlus2_var: AST):
+      t1(astPlus(astPlus1_var, astPlus2_var)) = astPlus1_var;
+
+  AST_t2_astPlus: AXIOM
+    FORALL (astPlus1_var: AST, astPlus2_var: AST):
+      t2(astPlus(astPlus1_var, astPlus2_var)) = astPlus2_var;
+
+  AST_sym_astVar: AXIOM
+    FORALL (astVar1_var: nat): sym(astVar(astVar1_var)) = astVar1_var;
+
+  AST_v_astLambda: AXIOM
+    FORALL (astLambda1_var: AST, astLambda2_var: AST):
+      v(astLambda(astLambda1_var, astLambda2_var)) = astLambda1_var;
+
+  AST_t0_astLambda: AXIOM
+    FORALL (astLambda1_var: AST, astLambda2_var: AST):
+      t0(astLambda(astLambda1_var, astLambda2_var)) = astLambda2_var;
+
+  AST_t1_astApp: AXIOM
+    FORALL (astApp1_var: AST, astApp2_var: AST):
+      t1(astApp(astApp1_var, astApp2_var)) = astApp1_var;
+
+  AST_t2_astApp: AXIOM
+    FORALL (astApp1_var: AST, astApp2_var: AST):
+      t2(astApp(astApp1_var, astApp2_var)) = astApp2_var;
+
+  AST_inclusive: AXIOM
+    FORALL (AST_var: AST):
+          astNum?(AST_var) OR astBool?(AST_var) OR astPlus?(AST_var)
+       OR astVar?(AST_var) OR astLambda?(AST_var) OR astApp?(AST_var);
+
+  AST_induction: AXIOM
+    FORALL (p: [AST -> boolean]):
+      (     FORALL (astNum1_var: nat): p(astNum(astNum1_var))
+        AND FORALL (astBool1_var: boolean): p(astBool(astBool1_var))
+        AND FORALL (astPlus1_var: AST, astPlus2_var: AST):
+              p(astPlus1_var) AND p(astPlus2_var) IMPLIES
+               p(astPlus(astPlus1_var, astPlus2_var))
+        AND FORALL (astVar1_var: nat): p(astVar(astVar1_var))
+        AND FORALL (astLambda1_var: AST, astLambda2_var: AST):
+              p(astLambda1_var) AND p(astLambda2_var) IMPLIES
+               p(astLambda(astLambda1_var, astLambda2_var))
+        AND FORALL (astApp1_var: AST, astApp2_var: AST):
+              p(astApp1_var) AND p(astApp2_var) IMPLIES
+               p(astApp(astApp1_var, astApp2_var)))
+       IMPLIES (FORALL (AST_var: AST): p(AST_var));
+
+  subterm(x: AST, y: AST):  boolean =
+      x = y OR
+       CASES y
+         OF astNum(astNum1_var): FALSE,
+            astBool(astBool1_var): FALSE,
+            astPlus(astPlus1_var, astPlus2_var):
+              subterm(x, astPlus1_var) OR subterm(x, astPlus2_var),
+            astVar(astVar1_var): FALSE,
+            astLambda(astLambda1_var, astLambda2_var):
+              subterm(x, astLambda1_var) OR subterm(x, astLambda2_var),
+            astApp(astApp1_var, astApp2_var):
+              subterm(x, astApp1_var) OR subterm(x, astApp2_var)
+         ENDCASES;
+
+  <<:  (well_founded?[AST]) =
+      LAMBDA (x, y: AST):
+        CASES y
+          OF astNum(astNum1_var): FALSE,
+             astBool(astBool1_var): FALSE,
+             astPlus(astPlus1_var, astPlus2_var):
+               (x = astPlus1_var OR x << astPlus1_var) OR
+                x = astPlus2_var OR x << astPlus2_var,
+             astVar(astVar1_var): FALSE,
+             astLambda(astLambda1_var, astLambda2_var):
+               (x = astLambda1_var OR x << astLambda1_var) OR
+                x = astLambda2_var OR x << astLambda2_var,
+             astApp(astApp1_var, astApp2_var):
+               (x = astApp1_var OR x << astApp1_var) OR
+                x = astApp2_var OR x << astApp2_var
+          ENDCASES;
+
+  AST_well_founded: AXIOM well_founded?[AST](<<);
+
+  reduce_nat(astNum?_fun: [nat -> nat], astBool?_fun: [boolean -> nat],
+             astPlus?_fun: [[nat, nat] -> nat], astVar?_fun: [nat -> nat],
+             astLambda?_fun: [[nat, nat] -> nat],
+             astApp?_fun: [[nat, nat] -> nat]):
+        [AST -> nat] =
+      LAMBDA (AST_adtvar: AST):
+        LET red: [AST -> nat] =
+              reduce_nat(astNum?_fun, astBool?_fun, astPlus?_fun,
+                         astVar?_fun, astLambda?_fun, astApp?_fun)
+          IN
+          CASES AST_adtvar
+            OF astNum(astNum1_var): astNum?_fun(astNum1_var),
+               astBool(astBool1_var): astBool?_fun(astBool1_var),
+               astPlus(astPlus1_var, astPlus2_var):
+                 astPlus?_fun(red(astPlus1_var), red(astPlus2_var)),
+               astVar(astVar1_var): astVar?_fun(astVar1_var),
+               astLambda(astLambda1_var, astLambda2_var):
+                 astLambda?_fun(red(astLambda1_var), red(astLambda2_var)),
+               astApp(astApp1_var, astApp2_var):
+                 astApp?_fun(red(astApp1_var), red(astApp2_var))
+            ENDCASES;
+
+  REDUCE_nat(astNum?_fun: [[nat, AST] -> nat],
+             astBool?_fun: [[boolean, AST] -> nat],
+             astPlus?_fun: [[nat, nat, AST] -> nat],
+             astVar?_fun: [[nat, AST] -> nat],
+             astLambda?_fun: [[nat, nat, AST] -> nat],
+             astApp?_fun: [[nat, nat, AST] -> nat]):
+        [AST -> nat] =
+      LAMBDA (AST_adtvar: AST):
+        LET red: [AST -> nat] =
+              REDUCE_nat(astNum?_fun, astBool?_fun, astPlus?_fun,
+                         astVar?_fun, astLambda?_fun, astApp?_fun)
+          IN
+          CASES AST_adtvar
+            OF astNum(astNum1_var): astNum?_fun(astNum1_var, AST_adtvar),
+               astBool(astBool1_var):
+                 astBool?_fun(astBool1_var, AST_adtvar),
+               astPlus(astPlus1_var, astPlus2_var):
+                 astPlus?_fun(red(astPlus1_var), red(astPlus2_var),
+                              AST_adtvar),
+               astVar(astVar1_var): astVar?_fun(astVar1_var, AST_adtvar),
+               astLambda(astLambda1_var, astLambda2_var):
+                 astLambda?_fun(red(astLambda1_var), red(astLambda2_var),
+                                AST_adtvar),
+               astApp(astApp1_var, astApp2_var):
+                 astApp?_fun(red(astApp1_var), red(astApp2_var),
+                             AST_adtvar)
+            ENDCASES;
+
+  reduce_ordinal(astNum?_fun: [nat -> ordinal],
+                 astBool?_fun: [boolean -> ordinal],
+                 astPlus?_fun: [[ordinal, ordinal] -> ordinal],
+                 astVar?_fun: [nat -> ordinal],
+                 astLambda?_fun: [[ordinal, ordinal] -> ordinal],
+                 astApp?_fun: [[ordinal, ordinal] -> ordinal]):
+        [AST -> ordinal] =
+      LAMBDA (AST_adtvar: AST):
+        LET red: [AST -> ordinal] =
+              reduce_ordinal(astNum?_fun, astBool?_fun, astPlus?_fun,
+                             astVar?_fun, astLambda?_fun, astApp?_fun)
+          IN
+          CASES AST_adtvar
+            OF astNum(astNum1_var): astNum?_fun(astNum1_var),
+               astBool(astBool1_var): astBool?_fun(astBool1_var),
+               astPlus(astPlus1_var, astPlus2_var):
+                 astPlus?_fun(red(astPlus1_var), red(astPlus2_var)),
+               astVar(astVar1_var): astVar?_fun(astVar1_var),
+               astLambda(astLambda1_var, astLambda2_var):
+                 astLambda?_fun(red(astLambda1_var), red(astLambda2_var)),
+               astApp(astApp1_var, astApp2_var):
+                 astApp?_fun(red(astApp1_var), red(astApp2_var))
+            ENDCASES;
+
+  REDUCE_ordinal(astNum?_fun: [[nat, AST] -> ordinal],
+                 astBool?_fun: [[boolean, AST] -> ordinal],
+                 astPlus?_fun: [[ordinal, ordinal, AST] -> ordinal],
+                 astVar?_fun: [[nat, AST] -> ordinal],
+                 astLambda?_fun: [[ordinal, ordinal, AST] -> ordinal],
+                 astApp?_fun: [[ordinal, ordinal, AST] -> ordinal]):
+        [AST -> ordinal] =
+      LAMBDA (AST_adtvar: AST):
+        LET red: [AST -> ordinal] =
+              REDUCE_ordinal(astNum?_fun, astBool?_fun, astPlus?_fun,
+                             astVar?_fun, astLambda?_fun, astApp?_fun)
+          IN
+          CASES AST_adtvar
+            OF astNum(astNum1_var): astNum?_fun(astNum1_var, AST_adtvar),
+               astBool(astBool1_var):
+                 astBool?_fun(astBool1_var, AST_adtvar),
+               astPlus(astPlus1_var, astPlus2_var):
+                 astPlus?_fun(red(astPlus1_var), red(astPlus2_var),
+                              AST_adtvar),
+               astVar(astVar1_var): astVar?_fun(astVar1_var, AST_adtvar),
+               astLambda(astLambda1_var, astLambda2_var):
+                 astLambda?_fun(red(astLambda1_var), red(astLambda2_var),
+                                AST_adtvar),
+               astApp(astApp1_var, astApp2_var):
+                 astApp?_fun(red(astApp1_var), red(astApp2_var),
+                             AST_adtvar)
+            ENDCASES;
+ END AST_adt
+
+AST_adt_reduce[range: TYPE]: THEORY
+ BEGIN
+
+  IMPORTING AST_adt
+
+  reduce(astNum?_fun: [nat -> range], astBool?_fun: [boolean -> range],
+         astPlus?_fun: [[range, range] -> range],
+         astVar?_fun: [nat -> range],
+         astLambda?_fun: [[range, range] -> range],
+         astApp?_fun: [[range, range] -> range]):
+        [AST -> range] =
+      LAMBDA (AST_adtvar: AST):
+        LET red: [AST -> range] =
+              reduce(astNum?_fun, astBool?_fun, astPlus?_fun, astVar?_fun,
+                     astLambda?_fun, astApp?_fun)
+          IN
+          CASES AST_adtvar
+            OF astNum(astNum1_var): astNum?_fun(astNum1_var),
+               astBool(astBool1_var): astBool?_fun(astBool1_var),
+               astPlus(astPlus1_var, astPlus2_var):
+                 astPlus?_fun(red(astPlus1_var), red(astPlus2_var)),
+               astVar(astVar1_var): astVar?_fun(astVar1_var),
+               astLambda(astLambda1_var, astLambda2_var):
+                 astLambda?_fun(red(astLambda1_var), red(astLambda2_var)),
+               astApp(astApp1_var, astApp2_var):
+                 astApp?_fun(red(astApp1_var), red(astApp2_var))
+            ENDCASES;
+
+  REDUCE(astNum?_fun: [[nat, AST] -> range],
+         astBool?_fun: [[boolean, AST] -> range],
+         astPlus?_fun: [[range, range, AST] -> range],
+         astVar?_fun: [[nat, AST] -> range],
+         astLambda?_fun: [[range, range, AST] -> range],
+         astApp?_fun: [[range, range, AST] -> range]):
+        [AST -> range] =
+      LAMBDA (AST_adtvar: AST):
+        LET red: [AST -> range] =
+              REDUCE(astNum?_fun, astBool?_fun, astPlus?_fun, astVar?_fun,
+                     astLambda?_fun, astApp?_fun)
+          IN
+          CASES AST_adtvar
+            OF astNum(astNum1_var): astNum?_fun(astNum1_var, AST_adtvar),
+               astBool(astBool1_var):
+                 astBool?_fun(astBool1_var, AST_adtvar),
+               astPlus(astPlus1_var, astPlus2_var):
+                 astPlus?_fun(red(astPlus1_var), red(astPlus2_var),
+                              AST_adtvar),
+               astVar(astVar1_var): astVar?_fun(astVar1_var, AST_adtvar),
+               astLambda(astLambda1_var, astLambda2_var):
+                 astLambda?_fun(red(astLambda1_var), red(astLambda2_var),
+                                AST_adtvar),
+               astApp(astApp1_var, astApp2_var):
+                 astApp?_fun(red(astApp1_var), red(astApp2_var),
+                             AST_adtvar)
+            ENDCASES;
+ END AST_adt_reduce

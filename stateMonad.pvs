@@ -1,0 +1,17 @@
+stateMonad   [ A:TYPE+, S:TYPE+ ]
+		: THEORY
+
+BEGIN
+		  
+  % ASSUMING
+   % assuming declarations
+  % ENDASSUMING
+
+  State : type = [S -> [A,S]];
+
+  return(a:A) : State = (lambda(s:S): (a,s));
+  bind(a,b:A) : State 
+
+END stateMonad
+
+

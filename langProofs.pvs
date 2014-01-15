@@ -1,0 +1,194 @@
+langProofs  % [ parameters ]
+		: THEORY
+  BEGIN
+
+  %% Type language ast structures
+  Ty : datatype
+  begin
+    tyNum:tyNum?
+    tyBool:tyBool?
+    tyAbs(dom:Ty,ran:Ty):tyAbs?
+    tyErr:tyErr?
+  end Ty
+
+  %% Term langauge ast structures
+  Term : datatype
+  begin	
+    tNum(num:nat):tNum?
+    tBool(val:boolean):tBool?
+    tPlus(t1:Term,t2:Term):tPlus?
+    tVar(sym:nat):tVar?
+    tLambda(v:nat,ty:Ty,t:Term):tLambda?
+    tApp(t1:Term,t2:Term):tApp?
+  end Term
+
+  %% Context maintenance structures
+  Gamma : type = list[[nat,Ty]]
+
+  lookupType(v:nat,g:Gamma) : recursive Ty =
+    cases g of
+      cons(r,rest) : if proj_1(r) = v
+                     then proj_2(r)
+                     else lookupType(v,rest)
+		     endif,
+      null : tyErr
+    endcases
+    measure length(g)
+  
+  %% Lemmas over lookup function
+  lookupLemma: lemma (forall (v:nat,g:Gamma) :
+                       (forall (v1:nat,ty:Ty) :
+		         lookupType(v,cons((v1,ty),g)) =
+			 if v=v1 then ty else lookupType(v,g) endif))
+
+  %% Substitution definition
+  %%  [v -> p]tl
+  subst(v:nat,p:Term,tl:Term): recursive Term =
+    cases tl of
+     tNum(i) : tNum(i),
+     tBool(i) : tBool(i),
+     tPlus(t1,t2) : tPlus(subst(v,p,t1),subst(v,p,t2)),
+     tLambda(vL,ty,t) : if v=vL
+                           then tLambda(vL,ty,t)
+                           else tLambda(vL,ty,subst(v,p,t))
+                        endif,
+     tApp(t1,t2) : tApp(subst(v,p,t1),subst(v,p,t2)),
+     tVar(i) : if i = v then p else tVar(i) endif
+   endcases
+   measure tl by <<
+
+  %% typeof definition
+  %%  g |- t:T
+  typeof(t:Term,g:Gamma): recursive Ty =
+    cases t of	
+      tNum(i) : tyNum,
+      tBool(i) : tyBool,
+      tPlus(t1,t2) : if typeof(t1,g) = tyNum and typeof(t2,g) = tyNum
+                        then tyNum
+		        else tyErr
+		     endif,
+      tLambda(v,ty,t) : tyAbs(ty,typeof(t,cons((v,ty),g))),
+      tApp(t1,t2) : let ty1:Ty = typeof(t1,g), ty2:Ty = typeof(t2,g) in
+                        if tyAbs?(ty1)
+			   then if dom(ty1) = ty2
+                                   then ran(ty1)
+                                   else tyErr
+                                endif
+			   else tyErr
+			  endif,
+      tVar(i) : lookupType(i,g)
+    endcases
+    measure t by <<
+    
+  %% eval definition
+  %%  t -> v
+  eval(t:Term): recursive Term = 
+    cases t of
+      tNum(i) : tNum(i),
+      tPlus(t1,t2) : tNum(num(eval(t1)) + num(eval(t2))),
+      tLambda(v,ty,t) : tLambda(v,ty,t),
+      tApp(t1,t2) : LET t3 = eval(t1) IN
+        cases t3 of
+	  tLambda(v,ty,t) : subst(v,t2,t)
+        endcases
+    endcases
+    MEASURE t BY <<
+
+  %% Some trivial regression proofs to test definitions
+  t1: theorem forall (x:nat) : eval(tNum(x)) = tNum(x)
+
+  t2: theorem forall (x,y:nat) :
+        eval(tPlus(tNum(x),tNum(y))) = tNum(x+y)
+
+  t3: theorem forall (v:nat,ty:Ty,t:Term) :
+        eval(tLambda(v,ty,t)) = tLambda(v,ty,t)
+
+  t4: theorem forall (n,m:nat) :
+        eval(tApp(tLambda(m,tyNum,tVar(m)),tNum(n))) = tNum(n)
+
+  %%% Verify that our typeof function accurately implements the typing rules.
+  %%% Could have defined the typeof function from rules directly.
+  %%% Type rules will now be available as lemmas.
+
+  %% Verify the num rule
+  %%  g|-tNum(n) : tyNum
+  t_num: lemma forall(g:Gamma):
+    forall (n:nat):
+       typeof(tNum(n),g) = tyNum
+ 
+  %% Verify the bool rule
+  t_bool: lemma forall(g:Gamma):
+    forall (b:boolean):
+       typeof(tBool(b),g) = tyBool
+
+  %% Verify the plus rule
+  t_plus: lemma forall(g:Gamma):
+    forall (t1,t2:Term):
+       typeof(t1,g) = tyNum and typeof(t2,g) = tyNum
+          implies typeof(tPlus(t1,t2),g) = tyNum
+
+  %% Verify the var rule
+  t_var: lemma forall(g:Gamma):
+    forall (v:nat,ty:Ty):
+       lookupType(v,g) = ty implies typeof(tVar(v),g) = ty
+
+  %% Verify the lambda rule
+  t_lambda: lemma forall (g:Gamma):
+    forall (v:nat,t1:Term, tyv,ty1:Ty) :
+       typeof(t1,cons((v,tyv),g)) = ty1
+         implies typeof(tLambda(v,tyv,t1),g) = tyAbs(tyv,ty1)
+  
+  %% Verify the app rule
+  t_app: lemma forall (g:Gamma):
+    forall (v:nat,t1,t2:Term, tyv,ty1:Ty): 
+       typeof(t1,g) = tyAbs(tyv,ty1) and typeof(t2,g) = tyv
+         implies typeof(tApp(t1,t2),g) = ty1
+    
+
+  %%%% Subject reduction proofs and subproofs
+
+  %% Some cannonical forms rules
+  tNum_can: lemma forall (t:Term,g:Gamma) :
+    typeof(t,g)=tyNum implies tNum?(t) OR tPlus?(t) OR tApp?(t) OR tVar?(t)
+
+  %% Some type inversion rules
+  tPlus_inv: lemma forall (t:(tPlus?),g:Gamma) :
+    typeof(t,g)=tyNum implies typeof(t1(t),g)=tyNum and typeof(t2(t),g)=tyNum
+
+  %% Tells us that if an tPlus types correctly, then it's terms are tyNum
+  %% Rule inversion
+  subj_red_tPlus_1: lemma forall (t:(tPlus?),g:Gamma) : 
+    typeof(t,g) = tyNum implies
+       typeof(t1(t),g) = tyNum and typeof(t2(t),g) = tyNum
+ 
+  %% Tells us that subject reduction applies for plus terms
+  subj_red_tPlus: lemma forall (t:(tPlus?),g:Gamma) :
+    typeof(t,g) = tyNum implies typeof(eval(t),g) = tyNum
+
+  %% tyOverLookup
+
+  lemma1: lemma forall (v:nat) :
+                  forall (v1:nat,ty1:Ty,g:Gamma) :
+		    (v/=v1 implies lookupType(v,cons((v1,ty1),g)) = lookupType(v,g))
+
+  %% Tells us that subject reduction applies over substitution if we
+  %% pick a term of the same type as the variable.
+
+  %% So far I've gotten the num, bool, var, plus and app cases to fall
+  %% out.  Lambda remains
+
+  subj_red_subst: lemma forall (t:Term,g:Gamma) :
+    forall (v:nat,t1:Term) :
+      lookupType(v,g) = typeof(t1,g) => typeof(t,g) = typeof(subst(v,t1,t),g)
+  
+  %% Tells us that subject reduction applies for lambda apps
+  %% subj_red_l2: lemma forall (t:(tLambda?)) :
+
+
+  %% The whole subject reduction proof
+  subj_red: theorem forall (t:Term,g:Gamma) : 
+    typeof(t,g) = typeof(eval(t),g)
+
+  END langProofs
+
+
